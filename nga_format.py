@@ -236,7 +236,7 @@ appendpid = []  # 里面是int
 def util_down(url, path, filename, prestr=''):
     time.sleep(0.1)
     global errortext
-    fullpath = path + '/' + prestr + filename
+    fullpath = f'{path}/{prestr}{filename}'
     try:
         with closing(requests.get(url, stream=True)) as response:
             chunk_size = 1024  # 单次请求最大值
@@ -244,36 +244,45 @@ def util_down(url, path, filename, prestr=''):
                 for data in response.iter_content(chunk_size=chunk_size):
                     file.write(data)
     except Exception as e:
-        print('Failed to down url:%s, path:%s:%s' % (url, fullpath, e))
-        errortext = errortext + \
-            '<Failed to down url:%s, path:%s>' % (url, fullpath)
+        print(f'Failed to down url:{url}, path:{fullpath}:{e}')
+        errortext = f'{errortext}<Failed to down url:{url}, path:{fullpath}>'
 
 
 def smile(raw):
     rex = re.findall(r'\[s\:ac\:(.+?)\]', raw)
     for ritem in rex:
-        raw = raw.replace('[s:ac:%s]' % (
-            ritem), '![%s](https://img4.nga.178.com/ngabbs/post/smile/%s)' % (ritem, smile_ac[ritem]))
+        raw = raw.replace(
+            f'[s:ac:{ritem}]',
+            f'![{ritem}](https://img4.nga.178.com/ngabbs/post/smile/{smile_ac[ritem]})',
+        )
 
     rex = re.findall(r'\[s\:a2\:(.+?)\]', raw)
     for ritem in rex:
-        raw = raw.replace('[s:a2:%s]' % (
-            ritem), '![%s](https://img4.nga.178.com/ngabbs/post/smile/%s)' % (ritem, smile_a2[ritem]))
+        raw = raw.replace(
+            f'[s:a2:{ritem}]',
+            f'![{ritem}](https://img4.nga.178.com/ngabbs/post/smile/{smile_a2[ritem]})',
+        )
 
     rex = re.findall(r'\[s\:pst\:(.+?)\]', raw)
     for ritem in rex:
-        raw = raw.replace('[s:pst:%s]' % (
-            ritem), '![%s](https://img4.nga.178.com/ngabbs/post/smile/%s)' % (ritem, smile_pst[ritem]))
+        raw = raw.replace(
+            f'[s:pst:{ritem}]',
+            f'![{ritem}](https://img4.nga.178.com/ngabbs/post/smile/{smile_pst[ritem]})',
+        )
 
     rex = re.findall(r'\[s\:dt\:(.+?)\]', raw)
     for ritem in rex:
-        raw = raw.replace('[s:dt:%s]' % (
-            ritem), '![%s](https://img4.nga.178.com/ngabbs/post/smile/%s)' % (ritem, smile_dt[ritem]))
+        raw = raw.replace(
+            f'[s:dt:{ritem}]',
+            f'![{ritem}](https://img4.nga.178.com/ngabbs/post/smile/{smile_dt[ritem]})',
+        )
 
     rex = re.findall(r'\[s\:pg\:(.+?)\]', raw)
     for ritem in rex:
-        raw = raw.replace('[s:pg:%s]' % (
-            ritem), '![%s](https://img4.nga.178.com/ngabbs/post/smile/%s)' % (ritem, smile_pg[ritem]))
+        raw = raw.replace(
+            f'[s:pg:{ritem}]',
+            f'![{ritem}](https://img4.nga.178.com/ngabbs/post/smile/{smile_pg[ritem]})',
+        )
 
     return raw
 
@@ -286,8 +295,8 @@ def pic(raw, tid, floorindex, total):
     rex = re.findall(r'(?<=\[img\]).+?(?=\[/img\])', raw)
     for ritem in rex:
         url = str(ritem)
-        if url[0:2] == './':
-            url = 'https://img.nga.178.com/attachments/' + url[2:]
+        if url.startswith('./'):
+            url = f'https://img.nga.178.com/attachments/{url[2:]}'
         url = url.replace('.medium.jpg', '')
         filename = hashlib.md5(
             bytes(url, encoding='utf-8')).hexdigest()[2:8] + url[-6:]
@@ -295,8 +304,7 @@ def pic(raw, tid, floorindex, total):
             util_down(url, ('./%d' % tid), filename, '')
             print('down pic:./%d/%s Floor[%d/%d]' %
                   (tid, filename, floorindex, total))
-        raw = raw.replace(('[img]%s[/img]' %
-                           ritem), ('![img](./%s)' % filename))
+        raw = raw.replace(f'[img]{ritem}[/img]', f'![img](./{filename})')
     return raw
 
 
@@ -314,7 +322,7 @@ def quote(raw):
         quoteauthor = ritem[0]
         if quoteauthor[:7] == '#anony_':
             # TODO: https://img4.nga.178.com/common_res/js_commonui.js commonui.anonyName 之后再整
-            quoteauthor = '匿' + quoteauthor[-6:]
+            quoteauthor = f'匿{quoteauthor[-6:]}'
         raw = ro0.sub('>[jump](#pid0) %s(%s) said:%s\n\n' %
                       (quoteauthor, ritem[1], quotetext), raw)
 
@@ -329,11 +337,11 @@ def quote(raw):
         # appendpid.append(int(ritem[0])) #这里会有原文的，就不append了
         if quoteauthor[:7] == '#anony_':
             # TODO: https://img4.nga.178.com/common_res/js_commonui.js commonui.anonyName 之后再整
-            quoteauthor = '匿' + quoteauthor[-6:]
+            quoteauthor = f'匿{quoteauthor[-6:]}'
         raw = ro1.sub('>[jump](#pid%s) %s(%s) said:%s\n\n' %
                       (ritem[0], quoteauthor, ritem[2], quotetext), raw)
-        # raw = raw.replace(re.search(r'\[quote\].+?\[uid.*?\](.+?)\[/uid\].*?\((\d{4}.+?)\):\[/b\](.+?)\[/quote\]',
-        # raw, flags=re.S).group(), '>%s(%s) said:%s' % (quoteauthor, ritem[1], quotetext))
+            # raw = raw.replace(re.search(r'\[quote\].+?\[uid.*?\](.+?)\[/uid\].*?\((\d{4}.+?)\):\[/b\](.+?)\[/quote\]',
+            # raw, flags=re.S).group(), '>%s(%s) said:%s' % (quoteauthor, ritem[1], quotetext))
 
     ro2 = re.compile(
         r'\[b\]Reply to \[pid=(\d+?),.+? Post by \[uid.*?\](.+?)\[\/uid\].+?\((.+?)\)\[\/b\]((?:\n){0,2})', flags=re.S)
@@ -354,19 +362,22 @@ def strikeout(raw):
 def url(raw):
     rex = re.findall(r'\[url\](.+?)\[\/url\]', raw)
     for ritem in rex:
-        raw = raw.replace('[url]%s[/url]' % ritem, '[url](%s)' % ritem)
+        raw = raw.replace(f'[url]{ritem}[/url]', f'[url]({ritem})')
     rex = re.findall(r'\[url=(.+?)\](.+?)\[\/url\]', raw)
     for ritem in rex:
-        raw = raw.replace('[url=%s]%s[/url]' % (ritem[0],
-                                                ritem[1]), '[%s](%s)' % (ritem[1], ritem[0]))
+        raw = raw.replace(
+            f'[url={ritem[0]}]{ritem[1]}[/url]', f'[{ritem[1]}]({ritem[0]})'
+        )
     return raw
 
 
 def align(raw):
     rex = re.findall(r'\[align=(.+?)\](.+?)\[\/align\]', raw)
     for ritem in rex:
-        raw = raw.replace('[align=%s]%s[/align]' % (ritem[0], ritem[1]),
-                          '<div style="text-align:%s">%s</div>' % (ritem[0], ritem[1]))
+        raw = raw.replace(
+            f'[align={ritem[0]}]{ritem[1]}[/align]',
+            f'<div style="text-align:{ritem[0]}">{ritem[1]}</div>',
+        )
     return raw
 
 
@@ -378,13 +389,12 @@ def collapse(raw):
         if ritem[0] == '':
             rt = '<details>\n  <summary>已折叠，点击展开</summary>\n  <pre>' + \
                 ritem[0].replace('\n', '<br>') + '</pre>\n</details>'
-            raw = raw.replace('[collapse]%s[/collapse]' % ritem[0], rt)
+            raw = raw.replace(f'[collapse]{ritem[0]}[/collapse]', rt)
         else:
             rt = '<details>\n  <summary>' + \
                 ritem[0][1:] + '</summary>\n  <pre>' + \
                 ritem[1].replace('\n', '<br>') + '</pre>\n</details>'
-            raw = raw.replace('[collapse%s]%s[/collapse]' %
-                              (ritem[0], ritem[1]), rt)
+            raw = raw.replace(f'[collapse{ritem[0]}]{ritem[1]}[/collapse]', rt)
     return raw
 
 
@@ -397,14 +407,13 @@ def anony(raw):
         i = 6
         res = ''
         for j in range(6):
-            if j == 0 or j == 3:
-                if int('0x0' + aname[i+1], 16) < len(anony_string1):
-                    res = res + anony_string1[int('0x0' + aname[i+1], 16)]
-            else:
-                if int('0x' + aname[i:i+2], 16) < len(anony_string2):
-                    res = res + anony_string2[int('0x' + aname[i:i+2], 16)]
+            if j in [0, 3]:
+                if int(f'0x0{aname[i + 1]}', 16) < len(anony_string1):
+                    res = res + anony_string1[int(f'0x0{aname[i + 1]}', 16)]
+            elif int(f'0x{aname[i:i + 2]}', 16) < len(anony_string2):
+                res = res + anony_string2[int(f'0x{aname[i:i + 2]}', 16)]
             i = i+2
-        res = res + '?'
+        res = f'{res}?'
         raw = raw.replace(aname, res)
     return raw
 
@@ -416,16 +425,18 @@ def audio(raw, tid, floorindex, total):
         ori = ritem
         ritem = ritem[:ritem.find('?duration=')]
         url = str(ritem)
-        if url[0:2] == './':
-            url = 'https://img.nga.178.com/attachments/' + url[2:]
+        if url.startswith('./'):
+            url = f'https://img.nga.178.com/attachments/{url[2:]}'
         filename = hashlib.md5(
             bytes(url, encoding='utf-8')).hexdigest()[2:8] + url[-6:]
         if os.path.exists('./%d/%s' % (tid, filename)) == False:
-            util_down(url, ('./%d' % tid), filename, str(floorindex) + '_')
+            util_down(url, './%d' % tid, filename, f'{str(floorindex)}_')
             print('down audio:./%d/%s Floor[%d/%d]' %
                   (tid, filename, floorindex, total))
-        raw = raw.replace(('[flash=audio]%s[/flash]' %
-                           ori), ('<存在一音频: %s , %s>' % (str(floorindex) + '_' + filename, dura)))
+        raw = raw.replace(
+            f'[flash=audio]{ori}[/flash]',
+            f"<存在一音频: {f'{str(floorindex)}_{filename}'} , {dura}>",
+        )
     return raw
 
 
