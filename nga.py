@@ -42,15 +42,15 @@ def single(page):
     if "服务器忙" in content:
         print("服务器忙")
         return False
-    usertext = re.search(r',"__U":(.+?),"__R":', content, flags=re.S).group(1)
+    usertext = re.search(r',"__U":(.+?),"__R":', content, flags=re.S)[1]
     # 这里处理一次，然后在回复内容的时候会调用nga_format.format对内容中的用户名引用会处理
     usertext = nga_format.anony(usertext)
     userdict = json.loads(usertext, strict=False)  # 牵涉到的用户信息
 
-    replytext = re.search(r',"__R":(.+?),"__T":', content, flags=re.S).group(1)
+    replytext = re.search(r',"__R":(.+?),"__T":', content, flags=re.S)[1]
     replydict = json.loads(replytext, strict=False)  # 具体的回复楼
 
-    ttext = re.search(r',"__T":(.+?),"__F":', content, flags=re.S).group(1)
+    ttext = re.search(r',"__T":(.+?),"__F":', content, flags=re.S)[1]
     tdict = json.loads(ttext, strict=False)  # 帖子的一些数据
 
     global title
@@ -67,7 +67,7 @@ def single(page):
         if 'content' in replydict[str(i)]:  # 正经楼层
             commentnumtxt = ''
             if one != '':
-                commentnumtxt = '[评论数:' + str(int(one) + 1) + ']\n\n'
+                commentnumtxt = f'[评论数:{str(int(one) + 1)}' + ']\n\n'
             totalfloor.append([int(replydict[str(i)]['lou']), int(replydict[str(i)]['pid']), replydict[str(i)]['postdate'], userdict[str(
                 replydict[str(i)]['authorid'])]['username'], commentnumtxt + str(replydict[str(i)]['content']), int(replydict[str(i)]['score'])])
         else:  # 评论楼层，无content
@@ -78,7 +78,9 @@ def single(page):
                     commentreply.remove(one)
 
     # lastposter 对不上 “且”不是只有主楼的情况
-    return int(tdict['replies']) > totalfloor[len(totalfloor)-1][0] and not(len(totalfloor) == 1 and totalfloor[0][0] == 0)
+    return int(tdict['replies']) > totalfloor[len(totalfloor) - 1][0] and (
+        len(totalfloor) != 1 or totalfloor[0][0] != 0
+    )
 
 
 def makefile():
@@ -130,7 +132,7 @@ def main():
     try:
         holder()
     except Exception as e:
-        print('Oops! %s' % e)
+        print(f'Oops! {e}')
     input('press to exit.')
 
 
